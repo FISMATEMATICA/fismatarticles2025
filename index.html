@@ -47,13 +47,21 @@
       "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
       "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
       "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida", "Luis F. Santos",
-      "Gabriel Menezes","Ricardo Correa da Silva"
+      "Gabriel Menezes"
     ];
 
     const resultsDiv = document.getElementById("results");
 
-    function deveDestacarAutor(nomeAutor) {
-      return nomesDestacados.some(autor => autor.toLowerCase() === nomeAutor.toLowerCase());
+    function formatAuthors(authors) {
+      const maxAuthors = 5;
+      const displayedAuthors = authors.slice(0, maxAuthors);
+      const remainingCount = authors.length - maxAuthors;
+
+      const authorList = displayedAuthors.map(author => {
+        return nomesDestacados.includes(author) ? `<strong>${author}</strong>` : author;
+      }).join(", ") +
+                         (remainingCount > 0 ? ` e ${remainingCount} outros` : '');
+      return authorList;
     }
 
     async function carregarResultados() {
@@ -78,9 +86,7 @@
           const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
 
-          const authorsHTML = authors.map(nome => 
-            deveDestacarAutor(nome) ? `<strong>${nome}</strong>` : nome
-          ).join(", ");
+          const authorsHTML = formatAuthors(authors);
 
           html += `
             <div class="paper">
