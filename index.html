@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Publicações arXiv</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #333;
+    }
+    .paper {
+      margin-bottom: 1.5em;
+      padding: 1em;
+      background: #fff;
+      border-left: 5px solid #0073e6;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .title a {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #0073e6;
+      text-decoration: none;
+    }
+    .meta {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Publicações no arXiv</h1>
+  <div id="results">Carregando...</div>
+
+  <script>
+    const nomesDestacados = [
+      "Gustavo Burdman", "Renata Zukanovich Funchal", "Oscar Eboli", "O. J. P. Eboli",
+      "Gustavo F. S. Alves", "Matheus Martines", "Luighi P. S. Leal", "L.P. Santos Leal",
+      "L. P. Santos Leal", "L. P. S. Leal", "Peter Reimitz", "Ana Luisa Foguel",
+      "Gabriel M. Salla", "Enrico Bertuzzo", "Oscar J. P. Éboli", "Lucas Magno D. Ramos",
+      "Gustavo S.S. Sakoda", "G.S.S. Sakoda", "Disha Bhatia", "Sujay Shil",
+      "Rafiqul Rahaman", "Barbara Amaral", "Eduardo Casali", "Elisa G.M. Ferreira",
+      "Frederique Grassi", "J.C.A. Barata", "João C. A. Barata", "Joao C. A. Barata",
+      "L.R.W.Abramo", "L. Raul Abramo", "R. Abramo", "Raul Abramo", "Natália V.N. Rodrigues",
+      "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
+      "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
+      "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida", "Luis F. Santos",
+      "Gabriel Menezes"
+    ];
+
+    const resultsDiv = document.getElementById("results");
+
+    function deveDestacarAutor(nomeAutor) {
+      return nomesDestacados.some(autor => autor.toLowerCase() === nomeAutor.toLowerCase());
+    }
+
+    async function carregarResultados() {
+      const url = "https://export.arxiv.org/api/query?search_query=au:%22Gustavo+Burdman%22+OR+au:%22Renata+Zukanovich+Funchal%22+OR+au:%22Oscar+Eboli%22+OR+au:%22O.+J.+P.+Eboli%22+OR+au:%22Gustavo+F.+S.+Alves%22+OR+au:%22Matheus+Martines%22+OR+au:%22Luighi+P.+S.+Leal%22+OR+au:%22L.P.+Santos+Leal%22+OR+au:%22L.+P.+Santos+Leal%22+OR+au:%22L.+P.+S.+Leal%22+OR+au:%22Peter+Reimitz%22+OR+au:%22Ana+Luisa+Foguel%22+OR+au:%22Gabriel+M.+Salla%22+OR+au:%22Enrico+Bertuzzo%22+OR+au:%22Oscar+J.+P.+%C3%89boli%22+OR+au:%22O.+J.+P.+Eboli%22+OR+au:%22Lucas+Magno+D.+Ramos%22+OR+au:%22Gustavo+S.S.+Sakoda%22+OR+au:%22G.S.S.+Sakoda%22+OR+au:%22Disha+Bhatia%22+OR+au:%22Sujay+Shil%22+OR+au:%22Rafiqul+Rahaman%22+OR+au:%22Barbara+Amaral%22+OR+au:%22Eduardo+Casali%22+OR+au:%22Elisa+G.M.+Ferreira%22+OR+au:%22Frederique+Grassi%22+OR+au:%22J.C.A.+Barata%22+OR+au:%22Jo%C3%A3o+C.+A.+Barata%22+OR+au:%22Joao+C.+A.+Barata%22+OR+au:%22L.R.W.Abramo%22+OR+au:%22L.+Raul+Abramo%22+OR+au:%22R.+Abramo%22+OR+au:%22Raul+Abramo%22+OR+au:%22Nat%C3%A1lia+V.N.+Rodrigues%22+OR+au:%22Marcos+Lima%22+OR+au:%22Matthew+Luzum%22+OR+au:%22Luis+Raul+Abramo%22+OR+au:%22Jo%C3%A3o+Vitor+Dinarte+Ferri%22+OR+au:%22Igor+Neiva+Mesquita%22+OR+au:%22%C3%81lvaro+S.+de+Jesus%22+OR+au:%22%C3%81.S.+de+Jesus%22+OR+au:%22Naim+Elias+Comar%22+OR+au:%22Alisson+Tezzin%22+OR+au:%22Ian+Tashiro%22+OR+au:%22Kevin+Pala%22+OR+au:%22Pedro+Ishida%22+OR+au:%22Eduardo+Casali%22+OR+au:%22Luis+F.+Santos%22+OR+au:%22Gabriel+Menezes%22&sortBy=submittedDate&sortOrder=descending&max_results=100";
+
+      try {
+        const response = await fetch(url);
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlText, "application/xml");
+
+        const entries = xml.querySelectorAll("entry");
+        if (entries.length === 0) {
+          resultsDiv.innerHTML = "Nenhum resultado encontrado.";
+          return;
+        }
+
+        let html = "";
+        entries.forEach(entry => {
+          const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
+          const link = entry.querySelector("id")?.textContent || "#";
+          const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
+          const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
+
+          const authorsHTML = authors.map(nome => 
+            deveDestacarAutor(nome) ? `<strong>${nome}</strong>` : nome
+          ).join(", ");
+
+          html += `
+            <div class="paper">
+              <div class="title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
+              <div class="meta">Autores: ${authorsHTML}</div>
+              <div class="meta">Publicado em: ${published}</div>
+            </div>
+          `;
+        });
+
+        resultsDiv.innerHTML = html;
+      } catch (error) {
+        resultsDiv.innerHTML = "Erro ao carregar os dados: " + error.message;
+      }
+    }
+
+    carregarResultados();
+  </script>
+</body>
+</html>
