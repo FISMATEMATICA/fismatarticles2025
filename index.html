@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Publications arXiv</title>
+  <title>Publicações arXiv</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -31,7 +31,7 @@
   </style>
 </head>
 <body>
-  <h1>Publications at arXiv</h1>
+  <h1>Publicações no arXiv</h1>
   <div id="results">Carregando...</div>
 
   <script>
@@ -43,25 +43,17 @@
       "Gustavo S.S. Sakoda", "G.S.S. Sakoda", "Disha Bhatia", "Sujay Shil",
       "Rafiqul Rahaman", "Barbara Amaral", "Eduardo Casali", "Elisa G.M. Ferreira",
       "Frederique Grassi", "J.C.A. Barata", "João C. A. Barata", "Joao C. A. Barata",
-      "L.R.W.Abramo", "L. Raul Abramo", "R. Abramo", "Raul Abramo", "L. R. Abramo", "Natália V.N. Rodrigues",
+      "L.R.W.Abramo", "L. Raul Abramo", "R. Abramo", "Raul Abramo", "Natália V.N. Rodrigues",
       "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
       "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
       "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida", "Luis F. Santos",
-      "Gabriel Menezes", "Bárbara Amaral", "Ricardo Correa da Silva"
+      "Gabriel Menezes"
     ];
 
     const resultsDiv = document.getElementById("results");
 
-    function formatAuthors(authors) {
-      const maxAuthors = 5;
-      const displayedAuthors = authors.slice(0, maxAuthors);
-      const remainingCount = authors.length - maxAuthors;
-
-      const authorList = displayedAuthors.map(author => {
-        return nomesDestacados.includes(author) ? `<strong>${author}</strong>` : author;
-      }).join(", ") +
-                         (remainingCount > 0 ? ` e ${remainingCount} outros` : '');
-      return authorList;
+    function deveDestacarAutor(nomeAutor) {
+      return nomesDestacados.some(autor => autor.toLowerCase() === nomeAutor.toLowerCase());
     }
 
     async function carregarResultados() {
@@ -86,7 +78,23 @@
           const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
 
-          const authorsHTML = formatAuthors(authors);
+          // Separar autores destacados e não destacados
+          const autoresDestacados = authors.filter(nome => deveDestacarAutor(nome));
+          const autoresNaoDestacados = authors.filter(nome => !deveDestacarAutor(nome));
+
+          // Combinar autores destacados primeiro
+          const autoresOrdenados = [...autoresDestacados, ...autoresNaoDestacados];
+
+          // Limitar a exibição a 5 autores
+          let autoresExibidos = autoresOrdenados.slice(0, 5);
+          if (autoresOrdenados.length > 5) {
+            autoresExibidos.push("et al.");
+          }
+
+          // Aplicar negrito aos autores destacados
+          const authorsHTML = autoresExibidos.map(nome => 
+            deveDestacarAutor(nome) ? `<strong>${nome}</strong>` : nome
+          ).join(", ");
 
           html += `
             <div class="paper">
