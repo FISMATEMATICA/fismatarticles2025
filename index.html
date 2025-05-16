@@ -31,7 +31,7 @@
   </style>
 </head>
 <body>
-  <h1>Publications</h1>
+  <h1>Publicações</h1>
   <div id="results">Carregando...</div>
 
   <script>
@@ -76,31 +76,25 @@
         entries.forEach(entry => {
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
           const link = entry.querySelector("id")?.textContent || "#";
-          const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
-          
-          // Filtrar apenas publicações de 2025
-          if (!published.startsWith("2025")) return;
-
-          // Obter a referência do journal, se houver (caso contrário, ficará em branco)
-          const journalRef = entry.querySelector("arxiv\\:journal_ref")?.textContent.trim() || "";
-
           const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
+          const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
+          const journal = entry.querySelector("journal_ref")?.textContent.trim() || "";
 
-          // Separar autores destacados e não destacados
+          // Filtrar somente artigos de 2025
+          if (published.slice(0, 4) !== "2025") {
+            return;
+          }
+
           const autoresDestacados = authors.filter(nome => deveDestacarAutor(nome));
           const autoresNaoDestacados = authors.filter(nome => !deveDestacarAutor(nome));
-
-          // Combinar autores destacados primeiro
           const autoresOrdenados = [...autoresDestacados, ...autoresNaoDestacados];
 
-          // Limitar a exibição a 8 autores
           let autoresExibidos = autoresOrdenados.slice(0, 8);
           if (autoresOrdenados.length > 8) {
             autoresExibidos.push("et al.");
           }
 
-          // Aplicar negrito aos autores destacados
-          const authorsHTML = autoresExibidos.map(nome => 
+          const authorsHTML = autoresExibidos.map(nome =>
             deveDestacarAutor(nome) ? `<strong>${nome}</strong>` : nome
           ).join(", ");
 
@@ -109,12 +103,12 @@
               <div class="title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
               <div class="meta">Autores: ${authorsHTML}</div>
               <div class="meta">Publicado em: ${published}</div>
-              <div class="meta">Journal Reference: ${journalRef}</div>
+              ${journal ? `<div class="meta">Journal Reference: ${journal}</div>` : ""}
             </div>
           `;
         });
 
-        resultsDiv.innerHTML = html || "Nenhum resultado de 2025 encontrado.";
+        resultsDiv.innerHTML = html;
       } catch (error) {
         resultsDiv.innerHTML = "Erro ao carregar os dados: " + error.message;
       }
