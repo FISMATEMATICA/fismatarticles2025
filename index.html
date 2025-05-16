@@ -76,8 +76,15 @@
         entries.forEach(entry => {
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
           const link = entry.querySelector("id")?.textContent || "#";
-          const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
           const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
+          
+          // Filtrar apenas publicações de 2025
+          if (!published.startsWith("2025")) return;
+
+          // Obter a referência do journal, se houver (caso contrário, ficará em branco)
+          const journalRef = entry.querySelector("arxiv\\:journal_ref")?.textContent.trim() || "";
+
+          const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
 
           // Separar autores destacados e não destacados
           const autoresDestacados = authors.filter(nome => deveDestacarAutor(nome));
@@ -102,11 +109,12 @@
               <div class="title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
               <div class="meta">Autores: ${authorsHTML}</div>
               <div class="meta">Publicado em: ${published}</div>
+              <div class="meta">Journal Reference: ${journalRef}</div>
             </div>
           `;
         });
 
-        resultsDiv.innerHTML = html;
+        resultsDiv.innerHTML = html || "Nenhum resultado de 2025 encontrado.";
       } catch (error) {
         resultsDiv.innerHTML = "Erro ao carregar os dados: " + error.message;
       }
