@@ -2,36 +2,69 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Publicações arXiv</title>
+  <title>Publications 2025</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 2em;
-      background-color: #f9f9f9;
-    }
-    h1 {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      background-color: #f7f9fc;
       color: #333;
     }
+
+    header {
+      background-color: #004d4d; /* azul petróleo */
+      padding: 2em;
+      text-align: center;
+    }
+
+    header h1 {
+      color: #ffffff;
+      font-size: 2.5em;
+      margin: 0;
+    }
+
+    #results {
+      max-width: 900px;
+      margin: 2em auto;
+      padding: 0 1em;
+    }
+
     .paper {
       margin-bottom: 1.5em;
-      padding: 1em;
-      background: #fff;
-      border-left: 5px solid #0073e6;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      padding: 1.2em;
+      background: #ffffff;
+      border-left: 6px solid #004d4d;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease;
     }
+
+    .paper:hover {
+      transform: translateY(-2px);
+    }
+
     .title a {
       font-size: 1.2em;
       font-weight: bold;
-      color: #0073e6;
+      color: #004d4d; /* azul petróleo */
       text-decoration: none;
     }
+
+    .title a:hover {
+      text-decoration: underline;
+    }
+
     .meta {
+      margin-top: 0.5em;
       color: #555;
+      font-size: 0.95em;
     }
   </style>
 </head>
 <body>
-  <h1>Publications 2025</h1>
+  <header>
+    <h1>Publications 2025</h1>
+  </header>
   <div id="results">Carregando...</div>
 
   <script>
@@ -58,11 +91,8 @@
     }
 
     async function carregarResultados() {
-      const baseUrl = "https://export.arxiv.org/api/query?";
-      const autoresQuery = nomesDestacados
-        .map(nome => `au:"${nome.replace(/ /g, '+')}"`)
-        .join("+OR+");
-      const url = `${baseUrl}search_query=${autoresQuery}&sortBy=submittedDate&sortOrder=descending&max_results=100`;
+      const autores = nomesDestacados.map(nome => `au:"${nome.replace(/ /g, "+")}"`).join("+OR+");
+      const url = `https://export.arxiv.org/api/query?search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=100`;
 
       try {
         const response = await fetch(url);
@@ -80,37 +110,38 @@
         entries.forEach(entry => {
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
           const link = entry.querySelector("id")?.textContent || "#";
-          const publishedDate = entry.querySelector("published")?.textContent || "";
-          const year = publishedDate.slice(0, 4);
-          if (year !== "2025") return;
-
           const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
+          const published = entry.querySelector("published")?.textContent.slice(0, 10) || "Sem data";
+
+          if (!published.startsWith("2025")) return;
+
+          const journalRef = entry.querySelector("arxiv\\:journal_ref, journal_ref");
+          const journal = journalRef ? journalRef.textContent.trim() : "";
 
           const autoresDestacados = authors.filter(nome => deveDestacarAutor(nome));
           const autoresNaoDestacados = authors.filter(nome => !deveDestacarAutor(nome));
           const autoresOrdenados = [...autoresDestacados, ...autoresNaoDestacados];
+
           let autoresExibidos = autoresOrdenados.slice(0, 8);
           if (autoresOrdenados.length > 8) {
             autoresExibidos.push("et al.");
           }
-          const authorsHTML = autoresExibidos.map(nome => 
+
+          const authorsHTML = autoresExibidos.map(nome =>
             deveDestacarAutor(nome) ? `<strong>${nome}</strong>` : nome
           ).join(", ");
-
-          const published = publishedDate.slice(0, 10) || "Sem data";
-          const journalRef = entry.querySelector("arxiv\\:journal_ref, journal_ref")?.textContent || "";
 
           html += `
             <div class="paper">
               <div class="title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
               <div class="meta">Autores: ${authorsHTML}</div>
               <div class="meta">Publicado em: ${published}</div>
-              ${journalRef ? `<div class="meta">${journalRef}</div>` : ""}
+              ${journal ? `<div class="meta">${journal}</div>` : ""}
             </div>
           `;
         });
 
-        resultsDiv.innerHTML = html || "Nenhuma publicação de 2025 encontrada.";
+        resultsDiv.innerHTML = html || "Nenhum artigo de 2025 encontrado.";
       } catch (error) {
         resultsDiv.innerHTML = "Erro ao carregar os dados: " + error.message;
       }
