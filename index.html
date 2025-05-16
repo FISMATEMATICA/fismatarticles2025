@@ -85,9 +85,9 @@
           // Combinar autores destacados primeiro
           const autoresOrdenados = [...autoresDestacados, ...autoresNaoDestacados];
 
-          // Limitar a exibição a 5 autores
-          let autoresExibidos = autoresOrdenados.slice(0, 5);
-          if (autoresOrdenados.length > 5) {
+          // Limitar a exibição a 8 autores
+          let autoresExibidos = autoresOrdenados.slice(0, 8);
+          if (autoresOrdenados.length > 8) {
             autoresExibidos.push("et al.");
           }
 
