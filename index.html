@@ -108,7 +108,13 @@
         }
 
         let html = "";
+        const vistos = new Set();
+
         entries.forEach(entry => {
+          const id = entry.querySelector("id")?.textContent;
+          if (vistos.has(id)) return;
+          vistos.add(id);
+
           const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
           const link = entry.querySelector("id")?.textContent || "#";
           const authors = Array.from(entry.querySelectorAll("author > name")).map(a => a.textContent.trim());
@@ -116,10 +122,9 @@
 
           if (!published.startsWith("2025")) return;
 
-          const journalRef = entry.querySelector("arxiv\\:journal_ref, journal_ref");
-          const journal = journalRef ? journalRef.textContent.trim() : "";
-
           const autoresDestacados = authors.filter(nome => deveDestacarAutor(nome));
+          if (autoresDestacados.length === 0) return; // <-- CORREÇÃO AQUI: ignora se não tiver autor exato destacado
+
           const autoresNaoDestacados = authors.filter(nome => !deveDestacarAutor(nome));
           const autoresOrdenados = [...autoresDestacados, ...autoresNaoDestacados];
 
@@ -131,6 +136,9 @@
           const authorsHTML = autoresExibidos.map(nome =>
             deveDestacarAutor(nome) ? `<strong>${nome}</strong>` : nome
           ).join(", ");
+
+          const journalRef = entry.querySelector("arxiv\\:journal_ref, journal_ref");
+          const journal = journalRef ? journalRef.textContent.trim() : "";
 
           html += `
             <div class="paper">
