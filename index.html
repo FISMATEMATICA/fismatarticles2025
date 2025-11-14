@@ -1,64 +1,109 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Artigos - Fismat 2025</title>
+  <meta charset="UTF-8" />
+  <title>Publications 2025</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      background-color: #f7f9fc;
+      color: #333;
+    }
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .artigo {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-        }
-    </style>
+    header {
+      background-color: #004d4d;
+      padding: 2em;
+      text-align: center;
+    }
+
+    header h1 {
+      color: #ffffff;
+      font-size: 2.5em;
+      margin: 0;
+    }
+
+    #results {
+      max-width: 900px;
+      margin: 2em auto;
+      padding: 0 1em;
+    }
+
+    .paper {
+      margin-bottom: 1.5em;
+      padding: 1.2em;
+      background: #ffffff;
+      border-left: 6px solid #004d4d;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease;
+    }
+
+    .paper:hover {
+      transform: translateY(-2px);
+    }
+
+    .title a {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #004d4d;
+      text-decoration: none;
+    }
+
+    .title a:hover {
+      text-decoration: underline;
+    }
+
+    .meta {
+      margin-top: 0.5em;
+      color: #555;
+      font-size: 0.95em;
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>Publications 2025</h1>
+  </header>
+  <div id="results">Carregando...</div>
 
-    <h1>Artigos dos Autores Selecionados</h1>
-    <div id="lista"></div>
+  <script>
+    const workerURL = "https://spring-glade-d911.fismat.workers.dev/";
 
-    <script>
-        async function carregarArtigos() {
-            const div = document.getElementById("lista");
-            div.innerHTML = "Carregando artigos...";
+    async function carregarResultados() {
+      try {
+        const response = await fetch(workerURL);
+        const data = await response.json();
 
-            try {
-                const resposta = await fetch("https://spring-glade-d911.fismat.workers.dev/");
-                
-                if (!resposta.ok) {
-                    throw new Error("Erro na requisição ao Worker");
-                }
-
-                const dados = await resposta.json();
-
-                if (!dados.entries || dados.entries.length === 0) {
-                    div.innerHTML = "Nenhum artigo encontrado.";
-                    return;
-                }
-
-                div.innerHTML = dados.entries
-                    .map(art => `
-                        <div class="artigo">
-                            <strong>${art.title}</strong><br>
-                            <em>${art.authors.join(", ")}</em><br>
-                            <a href="${art.link}" target="_blank">Acessar artigo</a>
-                        </div>
-                    `)
-                    .join("");
-
-            } catch (error) {
-                div.innerHTML = "Erro ao carregar os dados: " + error.message;
-            }
+        if (!data || !data.entries || data.entries.length === 0) {
+          document.getElementById("results").innerHTML = "Nenhum resultado encontrado.";
+          return;
         }
 
-        carregarArtigos();
-    </script>
+        let html = "";
 
+        data.entries.forEach(entry => {
+          html += `
+            <div class="paper">
+              <div class="title">
+                <a href="${entry.id}" target="_blank">${entry.title}</a>
+              </div>
+              <div class="meta">Autores: ${entry.authors}</div>
+              <div class="meta">Publicado em: ${entry.published}</div>
+              ${entry.journal ? `<div class="meta">${entry.journal}</div>` : ""}
+            </div>
+          `;
+        });
+
+        document.getElementById("results").innerHTML = html;
+
+      } catch (err) {
+        document.getElementById("results").innerHTML =
+          "Erro ao carregar os dados: " + err.message;
+      }
+    }
+
+    carregarResultados();
+  </script>
 </body>
 </html>
