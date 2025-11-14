@@ -1,170 +1,53 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>Publications 2025</title>
-  <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      margin: 0;
-      background-color: #f7f9fc;
-      color: #333;
-    }
-
-    header {
-      background-color: #004d4d;
-      padding: 2em;
-      text-align: center;
-    }
-
-    header h1 {
-      color: #ffffff;
-      font-size: 2.5em;
-      margin: 0;
-    }
-
-    #results {
-      max-width: 900px;
-      margin: 2em auto;
-      padding: 0 1em;
-    }
-
-    .paper {
-      margin-bottom: 1.5em;
-      padding: 1.2em;
-      background: #ffffff;
-      border-left: 6px solid #004d4d;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      transition: transform 0.2s ease;
-    }
-
-    .paper:hover {
-      transform: translateY(-2px);
-    }
-
-    .title a {
-      font-size: 1.2em;
-      font-weight: bold;
-      color: #004d4d;
-      text-decoration: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca de Artigos - Fismat 2025</title>
 </head>
 <body>
-  <header>
-    <h1>Publications 2025</h1>
-  </header>
+    <h1>Busca de Artigos por Autor</h1>
 
-  <div id="results">Carregando...</div>
+    <input type="text" id="authorInput" placeholder="Digite o nome do autor">
+    <button onclick="buscarArtigos()">Buscar</button>
 
-  <script>
-    const nomesDestacados = [
-      "Gustavo Burdman", "Renata Zukanovich Funchal", "Oscar Eboli", "O. J. P. Eboli",
-      "Gustavo F. S. Alves", "Matheus Martines", "Luighi P. S. Leal", "L.P. Santos Leal",
-      "L. P. Santos Leal", "L. P. S. Leal", "Peter Reimitz", "Ana Luisa Foguel",
-      "Gabriel M. Salla", "Oscar J. P. Éboli", "Lucas Magno D. Ramos",
-      "Gustavo S.S. Sakoda", "G.S.S. Sakoda", "Disha Bhatia", "Sujay Shil",
-      "Rafiqul Rahaman", "Barbara Amaral", "Eduardo Casali",
-      "Frederique Grassi", "J.C.A. Barata", "João C. A. Barata", "Joao C. A. Barata",
-      "L.R.W.Abramo", "L. Raul Abramo", "R. Abramo", "Raul Abramo", "Natália V.N. Rodrigues",
-      "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
-      "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
-      "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida",
-      "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
-      "R. Zukanovich Funchal", "Pedro Bittar", "Gabriel Santos Menezes",
-      "Ricardo Correa da Silva", "R Correa da Silva", "RC da Silva",
-      "Lua F. T. Airoldi", "Victor Hugo M. Ramos", "Victor Hugo Marques Ramos",
-      "Henrique Ay Casa Grande"
-    ];
+    <h2>Resultados:</h2>
+    <div id="resultados"></div>
 
-    const resultsDiv = document.getElementById("results");
+    <script>
+        async function buscarArtigos() {
+            const autor = document.getElementById("authorInput").value;
+            const div = document.getElementById("resultados");
+            div.innerHTML = "Carregando...";
 
-    function deveDestacarAutor(nomeAutor) {
-      return nomesDestacados.some(a => a.toLowerCase() === nomeAutor.toLowerCase());
-    }
+            try {
+                const resposta = await fetch("https://spring-glade-d911.fismat.workers.dev/?author=" + encodeURIComponent(autor));
 
-    async function carregarResultados() {
+                if (!resposta.ok) {
+                    throw new Error("Erro na requisição");
+                }
 
-      // ------------ 1) Montar query do arXiv ------------
-      const autoresQuery = nomesDestacados
-        .map(nome => `au:"${nome.replace(/ /g, "+")}"`)
-        .join("+OR+");
+                const dados = await resposta.json();
 
-      const arxivURL =
-        `https://export.arxiv.org/api/query?search_query=${autoresQuery}&sortBy=submittedDate&sortOrder=descending&max_results=100`;
+                if (dados.entries.length === 0) {
+                    div.innerHTML = "Nenhum artigo encontrado.";
+                    return;
+                }
 
-      // ------------ 2) Passar pelo seu Worker (IMPORTANTE!) ------------
-      const workerURL =
-        `https://spring-glade-d911.fismat.workers.dev/?url=${encodeURIComponent(arxivURL)}`;
-
-      try {
-        const response = await fetch(workerURL);
-        const xmlText = await response.text();
-
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(xmlText, "application/xml");
-
-        const entries = xml.querySelectorAll("entry");
-
-        if (entries.length === 0) {
-          resultsDiv.innerHTML = "Nenhum resultado encontrado.";
-          return;
+                div.innerHTML = dados.entries
+                    .map(artigo => `
+                        <p>
+                            <strong>${artigo.title}</strong><br>
+                            ${artigo.authors.join(", ")}<br>
+                            <a href="${artigo.link}" target="_blank">Acessar artigo</a>
+                        </p>
+                    `)
+                    .join("");
+            } catch (erro) {
+                div.innerHTML = "Erro ao carregar os dados: " + erro.message;
+            }
         }
+    </script>
 
-        let html = "";
-        const vistos = new Set();
-
-        entries.forEach(entry => {
-          const id = entry.querySelector("id")?.textContent;
-          if (vistos.has(id)) return;
-          vistos.add(id);
-
-          const title = entry.querySelector("title")?.textContent.trim();
-          const link = id;
-          const published = entry.querySelector("published")?.textContent.slice(0, 10);
-
-          if (!published.startsWith("2025")) return;
-
-          const authors = Array.from(entry.querySelectorAll("author > name"))
-            .map(a => a.textContent.trim());
-
-          const destacados = authors.filter(a => deveDestacarAutor(a));
-          if (destacados.length === 0) return;
-
-          const outros = authors.filter(a => !deveDestacarAutor(a));
-          const ordenados = [...destacados, ...outros];
-
-          let exibidos = ordenados.slice(0, 8);
-          if (ordenados.length > 8) exibidos.push("et al.");
-
-          const authorsHTML = exibidos
-            .map(nome => deveDestacarAutor(nome)
-              ? `<strong>${nome}</strong>`
-              : nome
-            )
-            .join(", ");
-
-          const journalRef =
-            entry.querySelector("arxiv\\:journal_ref, journal_ref")?.textContent || "";
-
-          html += `
-            <div class="paper">
-              <div class="title"><a href="${link}" target="_blank">${title}</a></div>
-              <div class="meta">Autores: ${authorsHTML}</div>
-              <div class="meta">Publicado em: ${published}</div>
-              ${journalRef ? `<div class="meta">${journalRef}</div>` : ""}
-            </div>`;
-        });
-
-        resultsDiv.innerHTML = html || "Nenhum artigo de 2025 encontrado.";
-
-      } catch (err) {
-        resultsDiv.innerHTML = "Erro ao carregar os dados: " + err.message;
-      }
-    }
-
-    carregarResultados();
-  </script>
 </body>
 </html>
