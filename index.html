@@ -82,7 +82,8 @@
       "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida",
       "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral", 
       "R. Zukanovich Funchal", "Pedro Bittar", "Gabriel Santos Menezes", "Ricardo Correa da Silva",
-      "R Correa da Silva", "RC da Silva", "Lua F. T. Airoldi", "Victor Hugo M. Ramos", "Victor Hugo Marques Ramos", "Henrique Ay Casa Grande"
+      "R Correa da Silva", "RC da Silva", "Lua F. T. Airoldi", "Victor Hugo M. Ramos", 
+      "Victor Hugo Marques Ramos", "Henrique Ay Casa Grande"
     ];
 
     const resultsDiv = document.getElementById("results");
@@ -96,7 +97,10 @@
       const url = `https://export.arxiv.org/api/query?search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=100`;
 
       try {
-        const response = await fetch(url);
+
+        /* --- AQUI É A ALTERAÇÃO --- */
+        const response = await fetch(`https://spring-glade-d911.fismat.workers.dev/?url=${encodeURIComponent(url)}`);
+
         const xmlText = await response.text();
         const parser = new DOMParser();
         const xml = parser.parseFromString(xmlText, "application/xml");
@@ -123,7 +127,7 @@
           if (!published.startsWith("2025")) return;
 
           const autoresDestacados = authors.filter(nome => deveDestacarAutor(nome));
-          if (autoresDestacados.length === 0) return; // <-- CORREÇÃO AQUI: ignora se não tiver autor exato destacado
+          if (autoresDestacados.length === 0) return;
 
           const autoresNaoDestacados = authors.filter(nome => !deveDestacarAutor(nome));
           const autoresOrdenados = [...autoresDestacados, ...autoresNaoDestacados];
@@ -160,4 +164,3 @@
   </script>
 </body>
 </html>
-
