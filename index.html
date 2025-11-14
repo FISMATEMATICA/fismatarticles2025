@@ -65,41 +65,102 @@
   <header>
     <h1>Publications 2025</h1>
   </header>
+
   <div id="results">Carregando...</div>
 
   <script>
     const workerURL = "https://spring-glade-d911.fismat.workers.dev/";
 
+    const nomesDestacados = [
+      "Gustavo Burdman", "Renata Zukanovich Funchal", "Oscar Eboli",
+      "O. J. P. Eboli", "Gustavo F. S. Alves", "Matheus Martines",
+      "Luighi P. S. Leal", "L.P. Santos Leal", "L. P. Santos Leal",
+      "L. P. S. Leal", "Peter Reimitz", "Ana Luisa Foguel",
+      "Gabriel M. Salla", "Oscar J. P. Éboli", "Lucas Magno D. Ramos",
+      "Gustavo S.S. Sakoda", "G.S.S. Sakoda", "Disha Bhatia",
+      "Sujay Shil", "Rafiqul Rahaman", "Barbara Amaral",
+      "Eduardo Casali", "Frederique Grassi", "J.C.A. Barata",
+      "João C. A. Barata", "Joao C. A. Barata", "L.R.W.Abramo",
+      "L. Raul Abramo", "R. Abramo", "Raul Abramo",
+      "Natália V.N. Rodrigues", "Marcos Lima", "Matthew Luzum",
+      "Luis Raul Abramo", "João Vitor Dinarte Ferri",
+      "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus",
+      "Naim Elias Comar", "Alisson Tezzin", "Ian Tashiro",
+      "Kevin Pala", "Pedro Ishida", "L. R. Abramo",
+      "O. J. P. Éboli", "Bárbara Amaral", "R. Zukanovich Funchal",
+      "Pedro Bittar", "Gabriel Santos Menezes",
+      "Ricardo Correa da Silva", "R Correa da Silva",
+      "RC da Silva", "Lua F. T. Airoldi",
+      "Victor Hugo M. Ramos", "Victor Hugo Marques Ramos",
+      "Henrique Ay Casa Grande"
+    ];
+
+    function deveDestacarAutor(nome) {
+      return nomesDestacados.some(n =>
+        n.toLowerCase() === nome.toLowerCase()
+      );
+    }
+
     async function carregarResultados() {
       try {
-        const response = await fetch(workerURL);
-        const data = await response.json();
+        const autores = nomesDestacados
+          .map(nome => `au:"${nome.replace(/ /g, "+")}"`)
+          .join("+OR+");
 
-        if (!data || !data.entries || data.entries.length === 0) {
-          document.getElementById("results").innerHTML = "Nenhum resultado encontrado.";
+        const arxivURL =
+          `https://export.arxiv.org/api/query?search_query=${autores}` +
+          `&sortBy=submittedDate&sortOrder=descending&max_results=200`;
+
+        const proxyURL = workerURL + "?url=" + encodeURIComponent(arxivURL);
+
+        const response = await fetch(proxyURL);
+        const xmlText = await response.text();
+
+        const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+        const entries = xml.getElementsByTagName("entry");
+
+        if (!entries.length) {
+          document.getElementById("results").innerHTML =
+            "Nenhum artigo encontrado.";
           return;
         }
 
         let html = "";
 
-        data.entries.forEach(entry => {
+        for (let entry of entries) {
+          const title = entry.getElementsByTagName("title")[0].textContent;
+          const link = entry.getElementsByTagName("id")[0].textContent;
+          const published = entry.getElementsByTagName("published")[0].textContent.slice(0, 10);
+
+          if (!published.startsWith("2025")) continue;
+
+          const authorTags = entry.getElementsByTagName("author");
+          let authors = [];
+          for (let a of authorTags) {
+            authors.push(a.getElementsByTagName("name")[0].textContent);
+          }
+
+          const destacados = authors.filter(deveDestacarAutor);
+          if (destacados.length === 0) continue;
+
+          const autoresHTML = authors
+            .map(n => deveDestacarAutor(n) ? `<strong>${n}</strong>` : n)
+            .join(", ");
+
           html += `
             <div class="paper">
-              <div class="title">
-                <a href="${entry.id}" target="_blank">${entry.title}</a>
-              </div>
-              <div class="meta">Autores: ${entry.authors}</div>
-              <div class="meta">Publicado em: ${entry.published}</div>
-              ${entry.journal ? `<div class="meta">${entry.journal}</div>` : ""}
+              <div class="title"><a href="${link}" target="_blank">${title}</a></div>
+              <div class="meta">Autores: ${autoresHTML}</div>
+              <div class="meta">Publicado em: ${published}</div>
             </div>
           `;
-        });
+        }
 
-        document.getElementById("results").innerHTML = html;
+        document.getElementById("results").innerHTML = html || "Nenhum artigo de 2025 encontrado.";
 
-      } catch (err) {
+      } catch (error) {
         document.getElementById("results").innerHTML =
-          "Erro ao carregar os dados: " + err.message;
+          "Erro ao carregar os dados: " + error.message;
       }
     }
 
