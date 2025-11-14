@@ -1,3 +1,4 @@
+// URL do seu Worker (já publicado)
 const WORKER_URL = "https://spring-glade-d911.fismat.workers.dev";
 
 const nomesDestacados = [
@@ -25,11 +26,16 @@ function deveDestacarAutor(nomeAutor) {
 }
 
 async function carregarResultados() {
+  resultsDiv.innerHTML = "Carregando...";
+
   const autores = nomesDestacados.map(nome => `au:"${nome.replace(/ /g, "+")}"`).join("+OR+");
   const query = `search_query=${autores}&sortBy=submittedDate&sortOrder=descending&max_results=100`;
 
   try {
+    // chama o Worker para contornar CORS e devolver o XML do arXiv
     const response = await fetch(`${WORKER_URL}?${query}`);
+    if (!response.ok) throw new Error("Erro ao acessar Worker: " + response.status);
+
     const xmlText = await response.text();
     const parser = new DOMParser();
     const xml = parser.parseFromString(xmlText, "application/xml");
@@ -45,7 +51,7 @@ async function carregarResultados() {
 
     entries.forEach(entry => {
       const id = entry.querySelector("id")?.textContent;
-      if (vistos.has(id)) return;
+      if (!id || vistos.has(id)) return;
       vistos.add(id);
 
       const title = entry.querySelector("title")?.textContent.trim() || "Sem título";
@@ -76,4 +82,16 @@ async function carregarResultados() {
           <div class="title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
           <div class="meta">Autores: ${authorsHTML}</div>
           <div class="meta">Publicado em: ${published}</div>
-          ${journal ? `<div cl
+          ${journal ? `<div class="meta">${journal}</div>` : ""}
+        </div>
+      `;
+    });
+
+    resultsDiv.innerHTML = html || "Nenhum artigo de 2025 encontrado.";
+  } catch (error) {
+    console.error(error);
+    resultsDiv.innerHTML = "Erro ao carregar os dados: " + (error.message || "Failed to fetch");
+  }
+}
+
+carregarResultados();
