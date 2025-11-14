@@ -3,50 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Busca de Artigos - Fismat 2025</title>
+    <title>Artigos - Fismat 2025</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .artigo {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Busca de Artigos por Autor</h1>
 
-    <input type="text" id="authorInput" placeholder="Digite o nome do autor">
-    <button onclick="buscarArtigos()">Buscar</button>
-
-    <h2>Resultados:</h2>
-    <div id="resultados"></div>
+    <h1>Artigos dos Autores Selecionados</h1>
+    <div id="lista"></div>
 
     <script>
-        async function buscarArtigos() {
-            const autor = document.getElementById("authorInput").value;
-            const div = document.getElementById("resultados");
-            div.innerHTML = "Carregando...";
+        async function carregarArtigos() {
+            const div = document.getElementById("lista");
+            div.innerHTML = "Carregando artigos...";
 
             try {
-                const resposta = await fetch("https://spring-glade-d911.fismat.workers.dev/?author=" + encodeURIComponent(autor));
-
+                const resposta = await fetch("https://spring-glade-d911.fismat.workers.dev/");
+                
                 if (!resposta.ok) {
-                    throw new Error("Erro na requisição");
+                    throw new Error("Erro na requisição ao Worker");
                 }
 
                 const dados = await resposta.json();
 
-                if (dados.entries.length === 0) {
+                if (!dados.entries || dados.entries.length === 0) {
                     div.innerHTML = "Nenhum artigo encontrado.";
                     return;
                 }
 
                 div.innerHTML = dados.entries
-                    .map(artigo => `
-                        <p>
-                            <strong>${artigo.title}</strong><br>
-                            ${artigo.authors.join(", ")}<br>
-                            <a href="${artigo.link}" target="_blank">Acessar artigo</a>
-                        </p>
+                    .map(art => `
+                        <div class="artigo">
+                            <strong>${art.title}</strong><br>
+                            <em>${art.authors.join(", ")}</em><br>
+                            <a href="${art.link}" target="_blank">Acessar artigo</a>
+                        </div>
                     `)
                     .join("");
-            } catch (erro) {
-                div.innerHTML = "Erro ao carregar os dados: " + erro.message;
+
+            } catch (error) {
+                div.innerHTML = "Erro ao carregar os dados: " + error.message;
             }
         }
+
+        carregarArtigos();
     </script>
 
 </body>
