@@ -12,7 +12,7 @@
     }
 
     header {
-      background-color: #004d4d; /* azul petróleo */
+      background-color: #004d4d;
       padding: 2em;
       text-align: center;
     }
@@ -46,22 +46,11 @@
     .title a {
       font-size: 1.2em;
       font-weight: bold;
-      color: #004d4d; /* azul petróleo */
+      color: #004d4d;
       text-decoration: none;
-    }
-
-    .title a:hover {
-      text-decoration: underline;
-    }
-
-    .meta {
-      margin-top: 0.5em;
-      color: #555;
-      font-size: 0.95em;
     }
   </style>
 </head>
-
 <body>
   <header>
     <h1>Publications 2025</h1>
@@ -69,7 +58,113 @@
 
   <div id="results">Carregando...</div>
 
-  <!-- Agora o código JavaScript está separado -->
-  <script src="script.js"></script>
+  <script>
+    const nomesDestacados = [
+      "Gustavo Burdman", "Renata Zukanovich Funchal", "Oscar Eboli", "O. J. P. Eboli",
+      "Gustavo F. S. Alves", "Matheus Martines", "Luighi P. S. Leal", "L.P. Santos Leal",
+      "L. P. Santos Leal", "L. P. S. Leal", "Peter Reimitz", "Ana Luisa Foguel",
+      "Gabriel M. Salla", "Oscar J. P. Éboli", "Lucas Magno D. Ramos",
+      "Gustavo S.S. Sakoda", "G.S.S. Sakoda", "Disha Bhatia", "Sujay Shil",
+      "Rafiqul Rahaman", "Barbara Amaral", "Eduardo Casali",
+      "Frederique Grassi", "J.C.A. Barata", "João C. A. Barata", "Joao C. A. Barata",
+      "L.R.W.Abramo", "L. Raul Abramo", "R. Abramo", "Raul Abramo", "Natália V.N. Rodrigues",
+      "Marcos Lima", "Matthew Luzum", "Luis Raul Abramo", "João Vitor Dinarte Ferri",
+      "Igor Neiva Mesquita", "Álvaro S. de Jesus", "Á.S. de Jesus", "Naim Elias Comar",
+      "Alisson Tezzin", "Ian Tashiro", "Kevin Pala", "Pedro Ishida",
+      "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
+      "R. Zukanovich Funchal", "Pedro Bittar", "Gabriel Santos Menezes",
+      "Ricardo Correa da Silva", "R Correa da Silva", "RC da Silva",
+      "Lua F. T. Airoldi", "Victor Hugo M. Ramos", "Victor Hugo Marques Ramos",
+      "Henrique Ay Casa Grande"
+    ];
+
+    const resultsDiv = document.getElementById("results");
+
+    function deveDestacarAutor(nomeAutor) {
+      return nomesDestacados.some(a => a.toLowerCase() === nomeAutor.toLowerCase());
+    }
+
+    async function carregarResultados() {
+
+      // ------------ 1) Montar query do arXiv ------------
+      const autoresQuery = nomesDestacados
+        .map(nome => `au:"${nome.replace(/ /g, "+")}"`)
+        .join("+OR+");
+
+      const arxivURL =
+        `https://export.arxiv.org/api/query?search_query=${autoresQuery}&sortBy=submittedDate&sortOrder=descending&max_results=100`;
+
+      // ------------ 2) Passar pelo seu Worker (IMPORTANTE!) ------------
+      const workerURL =
+        `https://spring-glade-d911.fismat.workers.dev/?url=${encodeURIComponent(arxivURL)}`;
+
+      try {
+        const response = await fetch(workerURL);
+        const xmlText = await response.text();
+
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlText, "application/xml");
+
+        const entries = xml.querySelectorAll("entry");
+
+        if (entries.length === 0) {
+          resultsDiv.innerHTML = "Nenhum resultado encontrado.";
+          return;
+        }
+
+        let html = "";
+        const vistos = new Set();
+
+        entries.forEach(entry => {
+          const id = entry.querySelector("id")?.textContent;
+          if (vistos.has(id)) return;
+          vistos.add(id);
+
+          const title = entry.querySelector("title")?.textContent.trim();
+          const link = id;
+          const published = entry.querySelector("published")?.textContent.slice(0, 10);
+
+          if (!published.startsWith("2025")) return;
+
+          const authors = Array.from(entry.querySelectorAll("author > name"))
+            .map(a => a.textContent.trim());
+
+          const destacados = authors.filter(a => deveDestacarAutor(a));
+          if (destacados.length === 0) return;
+
+          const outros = authors.filter(a => !deveDestacarAutor(a));
+          const ordenados = [...destacados, ...outros];
+
+          let exibidos = ordenados.slice(0, 8);
+          if (ordenados.length > 8) exibidos.push("et al.");
+
+          const authorsHTML = exibidos
+            .map(nome => deveDestacarAutor(nome)
+              ? `<strong>${nome}</strong>`
+              : nome
+            )
+            .join(", ");
+
+          const journalRef =
+            entry.querySelector("arxiv\\:journal_ref, journal_ref")?.textContent || "";
+
+          html += `
+            <div class="paper">
+              <div class="title"><a href="${link}" target="_blank">${title}</a></div>
+              <div class="meta">Autores: ${authorsHTML}</div>
+              <div class="meta">Publicado em: ${published}</div>
+              ${journalRef ? `<div class="meta">${journalRef}</div>` : ""}
+            </div>`;
+        });
+
+        resultsDiv.innerHTML = html || "Nenhum artigo de 2025 encontrado.";
+
+      } catch (err) {
+        resultsDiv.innerHTML = "Erro ao carregar os dados: " + err.message;
+      }
+    }
+
+    carregarResultados();
+  </script>
 </body>
 </html>
