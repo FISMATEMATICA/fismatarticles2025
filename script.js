@@ -17,8 +17,7 @@ const nomesDestacados = [
   "R. Zukanovich Funchal", "Pedro Bittar", "Gabriel Santos Menezes", "Ricardo Correa da Silva",
   "R Correa da Silva", "RC da Silva", "Lua F. T. Airoldi", "Victor Hugo M. Ramos",
   "Victor Hugo Marques Ramos", "Henrique Ay Casa Grande", "Cleverson Andrade Goulart", "Mauricio Porto Pato",
-  "A.J. da Silva",""M. Gomes"
-];
+ ];
 
 const resultsDiv = document.getElementById("results");
 
