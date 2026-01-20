@@ -16,7 +16,7 @@ const nomesDestacados = [
   "L. R. Abramo", "O. J. P. Éboli", "Bárbara Amaral",
   "R. Zukanovich Funchal", "Pedro Bittar", "Gabriel Santos Menezes","Gabriel Menezes","Ricardo Correa da Silva",
   "R Correa da Silva", "RC da Silva", "Lua F. T. Airoldi", "Victor Hugo M. Ramos",
-  "Victor Hugo Marques Ramos", "Henrique Ay Casa Grande", "Cleverson Andrade Goulart", "Mauricio Porto Pato",
+  "Victor Hugo Marques Ramos", "Henrique Ay Casa Grande", "Cleverson Andrade Goulart", "Mauricio Porto Pato","J. Frenkel","S. Martins-Filho"
  ];
 
 const resultsDiv = document.getElementById("results");
